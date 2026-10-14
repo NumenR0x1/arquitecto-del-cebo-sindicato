@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EL ARQUITECTO DEL CEBO: SINDICATO — Prototipo Instrumentado (Estudio Cero)</title>
+  <style>
+    :root {
+      --bg-0: #0a0d14;
+      --bg-1: #121826;
+      --bg-2: #1b2438;
+      --gold: #f5b82e;
+      --gold-bright: #ffe07d;
+      --crimson: #ef4444;
+      --emerald: #10b981;
+      --cyan: #06b6d4;
+      --violet: #8b5cf6;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e293b 0%, var(--bg-0) 75%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.92);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      color: #000;
+      font-weight: 900;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 0.3px;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .hud-stats {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill.gold { color: var(--gold-bright); border-color: rgba(245, 184, 46, 0.4); }
+    .pill.cyan { color: #67e8f9; border-color: rgba(6, 182, 212, 0.4); }
+    .pill.emerald { color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px 0;
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: var(--bg-1);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      padding: 9px 14px;
+      border-radius: 10px 10px 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--bg-2);
+      color: var(--gold-bright);
+      border-color: rgba(245, 184, 46, 0.45);
+      box-shadow: 0 -2px 12px rgba(245, 184, 46, 0.12);
+    }
+
+    main {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 16px 24px;
+      display: grid;
+      grid-template-columns: 440px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: rgba(18, 24, 38, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 0 12px 12px 12px;
+      padding: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Columna izquierda: El Juego en Canvas */
+    .game-stage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .stage-tag {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .stage-tag.cliff {
+      background: rgba(139, 92, 246, 0.2);
+      color: #c4b5fd;
+      border-color: rgba(139, 92, 246, 0.45);
+    }
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 410px;
+      margin: 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid rgba(245, 184, 46, 0.35);
+      background: #090d16;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      cursor: pointer;
+    }
+
+    /* Overlay Modals dentro del Canvas (Segundo 8 / Cliffhanger / Victoria) */
+    .overlay-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 11, 18, 0.91);
+      backdrop-filter: blur(5px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      z-index: 20;
+    }
+    .overlay-modal.visible { display: flex; }
+    .modal-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    .modal-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.45;
+    }
+    .btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: transform 0.1s ease, filter 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-gold {
+      background: linear-gradient(135deg, #f5b82e, #d97706);
+      color: #090d16;
+      box-shadow: 0 4px 14px rgba(245, 184, 46, 0.35);
+    }
+    .btn-emerald {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #052e16;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-violet {
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+    }
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .controls-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .controls-bar .btn { margin-bottom: 0; font-size: 12px; padding: 8px 10px; }
+
+    /* Columna derecha: Modos de Arquitecto, Sindicato y Telemetría de las 8 Palancas */
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--gold-bright);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .blueprint-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .bp-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .bp-card.selected {
+      border-color: var(--gold);
+      background: rgba(245, 184, 46, 0.1);
+    }
+    .bp-name { font-size: 12px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+    .bp-stat { font-size: 11px; color: var(--muted); }
+
+    .touch-config {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .cfg-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cfg-group select {
+      width: 100%;
+      background: var(--bg-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .syndicate-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .member-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+    }
+    .member-card.alert {
+      border-color: var(--crimson);
+      background: rgba(239, 68, 68, 0.1);
+    }
+    .relic-slots {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      justify-content: center;
+    }
+    .relic-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+    }
+    .relic-dot.owned { background: rgba(245, 184, 46, 0.25); border-color: var(--gold); color: var(--gold-bright); }
+    .relic-dot.missing { background: rgba(239, 68, 68, 0.2); border-color: var(--crimson); color: #fca5a5; }
+
+    /* Cuadro de Mando de Telemetría de Palancas (Día 1) */
+    .levers-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 680px) {
+      .levers-grid { grid-template-columns: repeat(2, 1fr); }
+      .blueprint-grid, .touch-config, .syndicate-strip { grid-template-columns: 1fr 1fr; }
+    }
+    .lever-box {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .lever-box.weakest {
+      border-color: var(--crimson);
+      background: rgba(239, 68, 68, 0.12);
+    }
+    .lever-label { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+    .lever-val { font-size: 16px; font-weight: 900; margin: 3px 0; color: var(--text); }
+    .lever-sub { font-size: 10px; color: #cbd5e1; }
+
+    .referrer-console {
+      background: #06090f;
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      font-size: 11px;
+      color: #67e8f9;
+      margin-bottom: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      line-height: 1.45;
+    }
+    .log-line { margin-bottom: 4px; }
+    .log-line span.ts { color: #64748b; }
+    .log-line span.tag { color: var(--gold); font-weight: bold; }
+
+    /* ONBOARDING FTUE: MANO DORADA ANIMADA (@keyframes) + GLOBO DE "EL VIEJO CERROJO" */
+    @keyframes ftueHandSlide {
+      0% { transform: translate(0px, 0px) scale(1) rotate(-12deg); filter: drop-shadow(0 0 8px rgba(245, 184, 46, 0.9)); }
+      45% { transform: translate(38px, -2px) scale(0.94) rotate(-4deg); filter: drop-shadow(0 0 16px rgba(255, 224, 125, 1)); }
+      75% { transform: translate(44px, -2px) scale(0.94) rotate(-4deg); opacity: 0.95; }
+      100% { transform: translate(0px, 0px) scale(1) rotate(-12deg); opacity: 1; }
+    }
+    @keyframes ftuePulseRing {
+      0% { transform: scale(0.75); opacity: 0.95; }
+      70% { transform: scale(1.65); opacity: 0; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+    @keyframes ftueBubbleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes ftueSectionGlow {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(245, 184, 46, 0.85), 0 0 18px rgba(245, 184, 46, 0.35); }
+      50% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.95), 0 0 26px rgba(16, 185, 129, 0.45); }
+    }
+    .ftue-hand-overlay {
+      position: absolute;
+      top: 150px;
+      left: 24px;
+      z-index: 15;
+      pointer-events: none;
+      transition: top 0.28s cubic-bezier(0.22, 1, 0.36, 1), left 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+    }
+    .ftue-hand-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .ftue-cerrojo-bubble {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+      border: 1.5px solid var(--gold);
+      border-radius: 10px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 11px;
+      line-height: 1.3;
+      max-width: 215px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.75), 0 0 14px rgba(245, 184, 46, 0.28);
+      animation: ftueBubbleFloat 2.1s ease-in-out infinite;
+      margin-bottom: 6px;
+    }
+    .ftue-cerrojo-name {
+      color: var(--gold-bright);
+      font-weight: 900;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+    .ftue-hand-pointer-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-left: 44px;
+    }
+    .ftue-pulse-ring {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2.5px solid var(--gold-bright);
+      background: rgba(245, 184, 46, 0.22);
+      animation: ftuePulseRing 1.3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+    .ftue-golden-hand {
+      font-size: 26px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      animation: ftueHandSlide 1.3s ease-in-out infinite;
+    }
+    .ftue-swipe-pill {
+      font-size: 10px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      color: #090d16;
+      padding: 2px 6px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+      box-shadow: 0 2px 8px rgba(245, 184, 46, 0.5);
+    }
+    .btn-ftue-top {
+      background: linear-gradient(135deg, #f5b82e, #d97706);
+      color: #090d16;
+      border: 1px solid #ffe07d;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 14px rgba(245, 184, 46, 0.4);
+      transition: transform 0.12s ease, filter 0.15s ease;
+    }
+    .btn-ftue-top:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .ftue-stepper-bar {
+      max-width: 1240px;
+      width: 100%;
+      margin: 8px auto 4px;
+      padding: 0 16px;
+      display: none;
+    }
+    .ftue-stepper-bar.active { display: block; }
+    .ftue-stepper-card {
+      background: linear-gradient(135deg, rgba(18, 24, 38, 0.98), rgba(30, 27, 75, 0.92));
+      border: 1.5px solid var(--gold);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    }
+    .ftue-step-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .ftue-step-dot {
+      background: var(--bg-1);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .ftue-step-dot.current {
+      background: rgba(245, 184, 46, 0.2);
+      color: var(--gold-bright);
+      border-color: var(--gold);
+    }
+    .ftue-step-dot.done {
+      background: rgba(16, 185, 129, 0.18);
+      color: #6ee7b7;
+      border-color: var(--emerald);
+    }
+    .ftue-highlight-pulse {
+      animation: ftueSectionGlow 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-badge">ESTUDIO CERO</span>
+    <div>
+      <div class="brand-title">EL ARQUITECTO DEL CEBO: SINDICATO</div>
+      <div class="brand-sub">Prototipo Jugable + Telemetría de las 8 Palancas y Play Install Referrer</div>
+    </div>
+  </div>
+  <div class="hud-stats">
+    <button class="btn-ftue-top" id="btn-onboarding-5steps" onclick="startGuidedOnboarding(0)">
+      🎓 Onboarding Guiado (5 Pasos)
+    </button>
+    <div class="pill gold" id="hud-gold">🪙 Botín: 1.450</div>
+    <div class="pill cyan" id="hud-relics">🏺 Reliquias Sindicato: 4/6</div>
+    <div class="pill emerald" id="hud-k0">📈 k₀ Medido: 0,129 · eCPI: $0,53</div>
+  </div>
+</header>
+
+<!-- BARRA INTERACTIVA DE ONBOARDING GUIADO EN 5 PASOS ("EL VIEJO CERROJO") -->
+<div class="ftue-stepper-bar" id="ftue-stepper-bar">
+  <div class="ftue-stepper-card">
+    <div style="flex:1;min-width:260px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span class="brand-badge" id="ftue-step-badge">PASO 1/5 · DRENAJE</span>
+        <span style="font-size:12px;font-weight:900;color:var(--gold-bright);" id="ftue-step-title">
+          🗝️ El Viejo Cerrojo: «Vacía primero el tanque de ácido lateral»
+        </span>
+      </div>
+      <div style="font-size:12px;color:#cbd5e1;" id="ftue-step-desc">
+        Toca el Pasador #1 (Azul) para desviar el ácido al foso seguro antes de tocar el señuelo rojo.
+      </div>
+    </div>
+    <div class="ftue-step-dots" id="ftue-step-dots">
+      <button class="ftue-step-dot current" onclick="setGuidedOnboardingStep(0)">1. Drenaje</button>
+      <button class="ftue-step-dot" onclick="setGuidedOnboardingStep(1)">2. Multiplicador</button>
+      <button class="ftue-step-dot" onclick="setGuidedOnboardingStep(2)">3. Rescate Rayos X</button>
+      <button class="ftue-step-dot" onclick="setGuidedOnboardingStep(3)">4. Sindicato de 4</button>
+      <button class="ftue-step-dot" onclick="setGuidedOnboardingStep(4)">5. Arquitecto 3 Toques</button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn btn-emerald" id="btn-ftue-action" style="width:auto;margin:0;padding:6px 11px;font-size:11px;" onclick="executeCurrentOnboardingStepAction()">
+        ⚡ Probar Paso 1
+      </button>
+      <button class="btn btn-gold" id="btn-ftue-next" style="width:auto;margin:0;padding:6px 11px;font-size:11px;" onclick="nextGuidedOnboardingStep()">
+        Siguiente ➡️
+      </button>
+      <button class="btn btn-ghost" style="width:auto;margin:0;padding:6px 9px;font-size:11px;" onclick="closeGuidedOnboarding()">
+        ✕
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="tab-btn active" id="tab-assault" onclick="switchMode('assault')">1. ⚔️ Asaltar Bóveda (Bucle 25s)</button>
+  <button class="tab-btn" id="tab-architect" onclick="switchMode('architect')">2. 🛠️ Construir Cebo en 3 Toques (Viral)</button>
+  <button class="tab-btn" id="tab-cliffhanger" onclick="switchMode('cliffhanger')">3. 📲 Vista Invitado WhatsApp (Cliffhanger Web)</button>
+</div>
+
+<main>
+  <!-- COLUMNA IZQUIERDA: MOTOR JUGABLE EN CANVAS 2D -->
+  <section class="panel">
+    <div class="game-stage-header">
+      <div>
+        <div style="font-size:13px;font-weight:800;" id="stage-title">Bóveda #042 — «El Espejismo ×4»</div>
+        <div style="font-size:11px;color:var(--muted);" id="stage-subtitle">Toca los pasadores en el orden correcto para llevar el oro y la reliquia al cofre</div>
+      </div>
+      <span class="stage-tag" id="stage-badge">91% FALLA EN SEG 6</span>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="gameCanvas" width="400" height="480"></canvas>
+
+      <!-- INDICADOR VISUAL DE ONBOARDING FTUE: MANO DORADA ANIMADA + GLOBO DE "EL VIEJO CERROJO" SOBRE PASADOR #1 -->
+      <div class="ftue-hand-overlay" id="ftue-hand-overlay">
+        <div class="ftue-cerrojo-bubble" id="ftue-cerrojo-bubble">
+          <div class="ftue-cerrojo-name">🗝️ El Viejo Cerrojo · Guía 0,5s</div>
+          <div id="ftue-cerrojo-text">¡Desliza <strong>1.º el Pasador Azul (#1)</strong> para drenar el ácido sin caer en el cebo!</div>
+        </div>
+        <div class="ftue-hand-pointer-wrap">
+          <div class="ftue-pulse-ring"></div>
+          <div class="ftue-golden-hand" id="ftue-golden-hand">
+            <span>👆</span>
+            <span class="ftue-swipe-pill" id="ftue-swipe-pill">DESLIZA #1 ➔</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 1: FALLO EN EL SEGUNDO 8 (Monetización Cirugía #4) -->
+      <div class="overlay-modal" id="modal-fail">
+        <span class="modal-badge" style="background:rgba(239,68,68,0.2);color:#fca5a5;">¡CAÍSTE EN EL CEBO!</span>
+        <div class="modal-title" id="fail-title">¡El Ácido fundió tu Botín en el segundo 6!</div>
+        <div class="modal-desc" id="fail-desc">
+          El 91 % de los jugadores retira primero el pasador del señuelo ×4 sin vaciar antes el tanque de ácido lateral.
+        </div>
+        <button class="btn btn-gold" id="btn-rewind" onclick="triggerRewindXRay()">
+          ⏪ Rebobinar 3s + Rayos X de Pasador Trampa (Rewarded Ad / $0,025 ARPDAU)
+        </button>
+        <button class="btn btn-ghost" onclick="resetLevel()">🔄 Reintentar desde el inicio</button>
+      </div>
+
+      <!-- MODAL 2: CLIFFHANGER INTERACTIVO EN EL 3.er PASADOR (Cirugía #1 del Adversario) -->
+      <div class="overlay-modal" id="modal-cliffhanger">
+        <span class="modal-badge" style="background:rgba(139,92,246,0.25);color:#ddd6fe;">⚡ CLIFFHANGER ZEIGARNIK (PUENTE WEB)</span>
+        <div class="modal-title">¡Estás a 1 Pasador de Vaciar la Bóveda de César!</div>
+        <div class="modal-desc">
+          Ya superaste las 2 primeras trampas y multiplicaste el botín a <strong>1.800 monedas + Reliquia #5</strong>.<br><br>
+          Para tirar del <strong>Pasador Dorado Final</strong>, reclamar el botín y activar la alerta de robo en el móvil de César, abre la app con 1 clic:
+        </div>
+        <button class="btn btn-emerald" id="btn-install-referrer" onclick="simulatePlayStoreInstallReferrer()">
+          📲 Abrir en Google Play y Tirar del Último Pasador (Pasa Install Referrer)
+        </button>
+        <button class="btn btn-ghost" onclick="closeCliffhangerAndFinish()">Ver resolución en modo demo</button>
+      </div>
+
+      <!-- MODAL 3: VICTORIA Y DISPARO VIRAL -->
+      <div class="overlay-modal" id="modal-win">
+        <span class="modal-badge" style="background:rgba(16,185,129,0.2);color:#6ee7b7;">¡BÓVEDA SAQUEADA!</span>
+        <div class="modal-title" id="win-title">+1.200 Monedas y Reliquia #5 Robada</div>
+        <div class="modal-desc" id="win-desc">
+          Acabas de dejar sin escudo la bóveda de tu socio. Blinda ahora tu propia cámara en 3 toques y rétale por WhatsApp para duplicar el botín del Sindicato.
+        </div>
+        <button class="btn btn-gold" onclick="shareChallengeLink()">
+          📤 Retar a Amigo por WhatsApp (Enlace con Token + Cliffhanger)
+        </button>
+        <button class="btn btn-violet" onclick="switchMode('architect')">
+          🛠️ Modificar mi Trampa en 3 Toques (15s)
+        </button>
+        <button class="btn btn-ghost" onclick="nextBlueprintLevel()">➡️ Siguiente Bóveda</button>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <button class="btn btn-ghost" id="btn-reset" onclick="resetLevel()">🔄 Reiniciar Nivel</button>
+      <button class="btn btn-violet" id="btn-ai-solve" onclick="runAISolverDemo()">🤖 Demostrar Solución con Solver IA</button>
+    </div>
+  </section>
+
+  <!-- COLUMNA DERECHA: ARQUITECTO EN 3 TOQUES, SINDICATO Y TELEMETRÍA DE LAS 8 PALANCAS -->
+  <section class="panel">
+    <!-- 1. ARQUITECTO EN 3 TOQUES (Cirugía #2: Evita la ley 90-9-1 de editores vacíos) -->
+    <div class="section-title">
+      <span>🛠️ 1. Arquitecto de Cebo en 3 Toques (Smart Blueprints)</span>
+      <span style="font-size:11px;color:var(--emerald);" id="validation-status">✓ Validado por Solver IA</span>
+    </div>
+    <div class="blueprint-grid" id="architect-blueprints-box">
+      <div class="bp-card selected" id="bp-0" onclick="selectBlueprint(0)">
+        <div class="bp-name">Plano A: Espejismo ×4</div>
+        <div class="bp-stat">Cebo puerta ×4 + tanque de ácido superior · 91% mortalidad</div>
+      </div>
+      <div class="bp-card" id="bp-1" onclick="selectBlueprint(1)">
+        <div class="bp-name">Plano B: Pasador de Judas</div>
+        <div class="bp-stat">Drenaje cruzado de lava antes de abrir el oro · 88% mortalidad</div>
+      </div>
+      <div class="bp-card" id="bp-2" onclick="selectBlueprint(2)">
+        <div class="bp-name">Plano C: Doble Compuerta</div>
+        <div class="bp-stat">Señuelo ×5 con desvío al foso ácido · 94% mortalidad</div>
+      </div>
+    </div>
+
+    <div class="touch-config" id="architect-touch-box">
+      <div class="cfg-group">
+        <label>Toque 1: Señuelo Visual</label>
+        <select id="cfg-decoy" onchange="applyArchitectChanges()">
+          <option value="4">Puerta Señuelo ×4</option>
+          <option value="5">Puerta Señuelo ×5</option>
+          <option value="3">Puerta Señuelo ×3</option>
+        </select>
+      </div>
+      <div class="cfg-group">
+        <label>Toque 2: Carril Trampa</label>
+        <select id="cfg-lane" onchange="applyArchitectChanges()">
+          <option value="left">Ácido a la Izquierda</option>
+          <option value="right">Ácido a la Derecha</option>
+        </select>
+      </div>
+      <div class="cfg-group">
+        <label>Toque 3: Apuesta Sindicato</label>
+        <select id="cfg-relic" onchange="applyArchitectChanges()">
+          <option value="Reliquia #5 (Corona)">Reliquia #5 (Corona)</option>
+          <option value="Reliquia #2 (Sello)">Reliquia #2 (Sello)</option>
+          <option value="Cofre de 1.500 Oro">Cofre de 1.500 Oro</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn btn-gold" style="margin-bottom:0;" onclick="shareChallengeLink()">
+        🔗 Generar Enlace de Reto WhatsApp (p_share)
+      </button>
+      <button class="btn btn-emerald" style="margin-bottom:0;" onclick="exportHeroAdCreative()">
+        🎬 Exportar como Anuncio Hero Post ID (Meta UA)
+      </button>
+    </div>
+
+    <!-- 2. SINDICATO DE 4 AMIGOS + ÁLBUM DE RELIQUIAS (Cirugía #3: Sostiene L_days) -->
+    <div class="section-title">
+      <span>🤝 2. Sindicato de 4 Amigos y Álbum de Reliquias (Retención D7/D30)</span>
+      <button class="btn btn-ghost" style="width:auto;padding:4px 10px;font-size:11px;margin:0;" onclick="triggerSyndicateRevenge()">
+        ⚡ Simular Venganza de Sindicato
+      </button>
+    </div>
+    <div class="syndicate-strip" id="syndicate-strip-box">
+      <div class="member-card">
+        <div style="font-weight:800;">👑 César (Tú)</div>
+        <div style="color:var(--emerald);font-size:10px;">Bóveda Blindada</div>
+        <div class="relic-slots">
+          <div class="relic-dot owned">1</div>
+          <div class="relic-dot owned">2</div>
+          <div class="relic-dot missing">5</div>
+        </div>
+      </div>
+      <div class="member-card alert" id="syndicate-partner">
+        <div style="font-weight:800;">🚨 Marcos (Socio)</div>
+        <div style="color:#fca5a5;font-size:10px;" id="partner-status">¡Asaltado hace 4m!</div>
+        <div class="relic-slots">
+          <div class="relic-dot owned">3</div>
+          <div class="relic-dot owned">4</div>
+          <div class="relic-dot missing">6</div>
+        </div>
+      </div>
+      <div class="member-card">
+        <div style="font-weight:800;">🛡️ Elena (Socia)</div>
+        <div style="color:var(--muted);font-size:10px;">Te sobra su pieza #2</div>
+        <div class="relic-slots">
+          <div class="relic-dot owned">5</div>
+          <div class="relic-dot missing">2</div>
+          <div class="relic-dot owned">6</div>
+        </div>
+      </div>
+      <div class="member-card">
+        <div style="font-weight:800;">➕ Invitar #4</div>
+        <div style="color:var(--gold);font-size:10px;">Bono +25% Escudo</div>
+        <div class="relic-slots">
+          <div class="relic-dot" style="width:100%;cursor:pointer;" onclick="shareChallengeLink()">Invitar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TELEMETRÍA EN VIVO DE LAS 8 PALANCAS Y PLAY INSTALL REFERRER (Paso 6) -->
+    <div class="section-title">
+      <span>📊 3. Telemetría en Vivo de las 8 Palancas + Play Install Referrer API</span>
+      <button class="btn btn-violet" style="width:auto;padding:4px 10px;font-size:11px;margin:0;" onclick="simulateCohortBatch()">
+        🚀 Simular +1.000 Jugadores (Test de Palancas)
+      </button>
+    </div>
+
+    <div class="levers-grid">
+      <div class="lever-box">
+        <div class="lever-label">1. Tasa Compartir (p_share)</div>
+        <div class="lever-val" id="m-pshare">8,50 %</div>
+        <div class="lever-sub" id="m-pshare-sub">Planos 3 toques + Reto</div>
+      </div>
+      <div class="lever-box">
+        <div class="lever-label">2. Alcance (n_reach)</div>
+        <div class="lever-val" id="m-nreach">4,20</div>
+        <div class="lever-sub">Personas/grupo WhatsApp</div>
+      </div>
+      <div class="lever-box">
+        <div class="lever-label">3. Conversión (c_conv)</div>
+        <div class="lever-val" id="m-cconv">6,20 %</div>
+        <div class="lever-sub" id="m-cconv-sub">Cliffhanger 3.er pasador</div>
+      </div>
+      <div class="lever-box">
+        <div class="lever-label">4. Días Activos (L_days)</div>
+        <div class="lever-val" id="m-ldays">5,84 d</div>
+        <div class="lever-sub">D1=42% · D7=18% · D30=6,5%</div>
+      </div>
+      <div class="lever-box">
+        <div class="lever-label">5. Ciclo Viral (T_cycle)</div>
+        <div class="lever-val" id="m-tcycle">1,00 d</div>
+        <div class="lever-sub">Venganza en el mismo día</div>
+      </div>
+      <div class="lever-box">
+        <div class="lever-label">6. CPI Pagado -> eCPI Real</div>
+        <div class="lever-val" id="m-ecpi">$0,76 → $0,53</div>
+        <div class="lever-sub">Mult. Total: 1,42x (k₀=0,129)</div>
+      </div>
+      <div class="lever-box">
+        <div class="lever-label">7. Empuje Tienda + Social</div>
+        <div class="lever-val" id="m-uplift">+25 % / -20 %</div>
+        <div class="lever-sub">Ranking Play + Hero Post ID</div>
+      </div>
+      <div class="lever-box weakest" id="box-weakest">
+        <div class="lever-label">⚠️ PALANCA MÁS DÉBIL</div>
+        <div class="lever-val" id="m-weakest" style="font-size:13px;color:#fca5a5;">ARPDAU ($0,125)</div>
+        <div class="lever-sub" id="m-weakest-sub">ROAS Caja 90d: 113,7% · LTV: 136,6%</div>
+      </div>
+    </div>
+
+    <div class="referrer-console" id="telemetry-log"></div>
+  </section>
+</main>
+
+<script>
+/**
+ * EL ARQUITECTO DEL CEBO: SINDICATO — Motor Físico 2D + Instrumentación de Palancas desde el Día 1
+ * Construido de forma autónoma para Estudio Cero (César).
+ */
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Estado de Telemetría en Vivo (conecta acciones reales con las 8 palancas)
+const telemetry = {
+  sessions: 100,
+  sharesTriggered: 9,
+  reachPerShare: 4.2,
+  cliffhangerViews: 38,
+  installReferrerConversions: 3,
+  rewindsUsed: 12,
+  paidInstalls: 1184,
+  storeInstalls: 296,
+  viralInstalls: 204,
+  cpiPaid: 0.76,
+  arpdauNet: 0.125,
+  lDays: 5.84,
+  tCycle: 1.0,
+  storeUplift: 0.25,
+  adSocialDiscount: 0.20,
+  currentReferrerPayload: "utm_source=whatsapp_syndicate&utm_medium=cliffhanger_pin3&inviter_id=CESAR_01&blueprint=bp_0&relic_stake=5"
+};
+
+// Configuración del Arquitecto en 3 Toques
+let currentMode = 'assault'; // 'assault' | 'architect' | 'cliffhanger'
+let selectedBlueprintIdx = 0;
+let decoyMultiplier = 4;
+let acidSide = 'left';
+let stakedRelic = 'Reliquia #5 (Corona)';
+let xrayActive = false;
+let goldCollected = 1450;
+let relicsOwned = 4;
+
+// Estado físico del nivel en Canvas
+let pins = [];
+let balls = [];
+let particles = [];
+let gates = [];
+let walls = [];
+let chest = { x: 155, y: 418, w: 90, h: 42 };
+let acidPool = { x: 25, y: 424, w: 95, h: 36 };
+let levelStatus = 'playing'; // 'playing' | 'won' | 'failed' | 'cliffhanger_paused'
+let pinsPulledCount = 0;
+let savedSnapshot = null;
+
+// Sintetizador de audio ligero (WebAudio API sin archivos externos)
+let audioCtx = null;
+function playTone(freq, duration = 0.08, type = 'sine', gainVal = 0.08) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function logTelemetry(tag, msg) {
+  const el = document.getElementById('telemetry-log');
+  const now = new Date().toLocaleTimeString('es-ES', { hour12: false });
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="ts">[${now}]</span> <span class="tag">[${tag}]</span> ${msg}`;
+  el.prepend(div);
+}
+
+/**
+ * Construye la geometría física del plano seleccionado
+ * Regla clave:
+ *  - Pin 1 (Azul): Abre el drenaje lateral que desvía el ácido hacia el foso seguro.
+ *  - Pin 2 (Rojo): Trampa de cebo. Si se tira de él ANTES de drenar el ácido, el ácido cae sobre el oro.
+ *  - Pin 3 (Dorado): Suelta las monedas multiplicadas y la Reliquia directamente hacia el cofre.
+ */
+function buildLevelGeometry() {
+  pins = [];
+  balls = [];
+  particles = [];
+  gates = [];
+  walls = [];
+  levelStatus = 'playing';
+  pinsPulledCount = 0;
+
+  const isLeftAcid = (acidSide === 'left');
+  const acidOriginX = isLeftAcid ? 105 : 295;
+  const drainTargetX = isLeftAcid ? 55 : 345;
+
+  chest = { x: 155, y: 416, w: 90, h: 42 };
+  acidPool = { x: isLeftAcid ? 18 : 292, y: 420, w: 90, h: 38 };
+
+  // Pasador 1 (Azul - Drenaje de Ácido: el correcto para tirar primero)
+  pins.push({
+    id: 'pin_drain',
+    label: '1. Drenaje Azul',
+    x1: isLeftAcid ? 60 : 255,
+    y1: 210,
+    x2: isLeftAcid ? 145 : 340,
+    y2: 210,
+    color: '#06b6d4',
+    pulled: false,
+    slideProgress: 0,
+    isTrapIfFirst: false,
+    role: 'drain'
+  });
+
+  // Pasador 2 (Rojo - Cebo Engañoso sobre la puerta multiplicadora)
+  pins.push({
+    id: 'pin_trap',
+    label: '2. Pasador Cebo Rojo',
+    x1: 145,
+    y1: 245,
+    x2: 255,
+    y2: 245,
+    color: '#ef4444',
+    pulled: false,
+    slideProgress: 0,
+    isTrapIfFirst: true,
+    role: 'bait'
+  });
+
+  // Pasador 3 (Dorado - Compuerta final de la bóveda)
+  pins.push({
+    id: 'pin_gold',
+    label: '3. Pasador Dorado Final',
+    x1: 145,
+    y1: 345,
+    x2: 255,
+    y2: 345,
+    color: '#f5b82e',
+    pulled: false,
+    slideProgress: 0,
+    isTrapIfFirst: false,
+    role: 'vault'
+  });
+
+  // Puerta multiplicadora en el canal central
+  gates.push({
+    x: 150,
+    y: 282,
+    w: 100,
+    h: 26,
+    mult: decoyMultiplier,
+    text: `×${decoyMultiplier} BOTÍN`,
+    color: '#10b981'
+  });
+
+  // Muros guía del embudo
+  walls = [
+    // Embudo central de oro
+    { x1: 140, y1: 60, x2: 145, y2: 360 },
+    { x1: 260, y1: 60, x2: 255, y2: 360 },
+    // Tanque lateral de ácido y canal de drenaje
+    { x1: isLeftAcid ? 55 : 260, y1: 90, x2: isLeftAcid ? 55 : 345, y2: 215 },
+    { x1: isLeftAcid ? 140 : 345, y1: 90, x2: isLeftAcid ? 140 : 345, y2: 215 }
+  ];
+
+  // Bolas de Oro + 1 Reliquia en la cámara central superior
+  for (let i = 0; i < 10; i++) {
+    balls.push({
+      x: 175 + (i % 5) * 12,
+      y: 110 + Math.floor(i / 5) * 14,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: 0,
+      r: 7,
+      type: i === 0 ? 'relic' : 'gold',
+      multiplied: false,
+      active: true
+    });
+  }
+
+  // Gotas de Ácido Verde en el tanque lateral
+  for (let i = 0; i < 12; i++) {
+    balls.push({
+      x: acidOriginX - 18 + (i % 4) * 11,
+      y: 115 + Math.floor(i / 4) * 13,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: 0,
+      r: 6.5,
+      type: 'acid',
+      multiplied: false,
+      active: true,
+      drainedSafely: false
+    });
+  }
+
+  hideAllModals();
+  if (typeof updateFtueHandOverlay === 'function') {
+    updateFtueHandOverlay();
+  }
+}
+
+function saveStateSnapshot() {
+  savedSnapshot = {
+    pins: JSON.parse(JSON.stringify(pins)),
+    balls: JSON.parse(JSON.stringify(balls)),
+    pinsPulledCount
+  };
+}
+
+function hideAllModals() {
+  document.getElementById('modal-fail').classList.remove('visible');
+  document.getElementById('modal-cliffhanger').classList.remove('visible');
+  document.getElementById('modal-win').classList.remove('visible');
+}
+
+function pullPin(pin) {
+  if (pin.pulled || levelStatus !== 'playing') return;
+
+  // En modo Cliffhanger (Vista de amigo invitado en WhatsApp), al tocar el 3.er pasador (Dorado)
+  // se congela la física con el Efecto Zeigarnik antes de soltar el cofre final
+  if (currentMode === 'cliffhanger' && pin.id === 'pin_gold') {
+    levelStatus = 'cliffhanger_paused';
+    telemetry.cliffhangerViews++;
+    playTone(580, 0.18, 'triangle', 0.12);
+    document.getElementById('modal-cliffhanger').classList.add('visible');
+    logTelemetry('ZEIGARNIK_LOCK', 'Invitado tocó el 3.er pasador en Web -> Congelado a 1 paso del cofre. Solicitando Google Play Install Referrer.');
+    updateTelemetryUI();
+    return;
+  }
+
+  saveStateSnapshot();
+  pin.pulled = true;
+  pinsPulledCount++;
+  playTone(320 + pinsPulledCount * 90, 0.1, 'sine', 0.1);
+
+  const drainPin = pins.find(p => p.id === 'pin_drain');
+
+  if (pin.id === 'pin_drain') {
+    // El ácido drena de forma segura hacia el depósito lateral inferior
+    balls.forEach(b => {
+      if (b.type === 'acid') {
+        b.drainedSafely = true;
+        b.vx = (acidSide === 'left') ? -1.4 : 1.4;
+      }
+    });
+    logTelemetry('GAMEPLAY', 'Pasador Azul retirado: tanque de ácido drenado con éxito.');
+  } else if (pin.id === 'pin_trap') {
+    // Si el jugador retira el pasador rojo SIN haber drenado antes el ácido, el ácido invade el canal central
+    if (!drainPin.pulled) {
+      balls.forEach(b => {
+        if (b.type === 'acid' && !b.drainedSafely) {
+          b.vx = (acidSide === 'left') ? 2.6 : -2.6;
+          b.vy = 1.5;
+        }
+      });
+      logTelemetry('TRAP_HIT', 'Caída en el cebo del segundo 6: retiró el pasador rojo sin drenar el ácido.');
+    } else {
+      logTelemetry('GAMEPLAY', 'Pasador Rojo retirado con el ácido ya neutralizado.');
+    }
+  } else if (pin.id === 'pin_gold') {
+    logTelemetry('GAMEPLAY', 'Pasador Dorado Final retirado: liberando botín hacia el cofre.');
+  }
+
+  if (typeof updateFtueHandOverlay === 'function') {
+    updateFtueHandOverlay();
+  }
+}
+
+function spawnParticles(x, y, color, count = 10) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 5,
+      vy: (Math.random() - 0.8) * 4,
+      life: 1.0,
+      color
+    });
+  }
+}
+
+function updatePhysics() {
+  if (levelStatus !== 'playing') return;
+
+  const drainPin = pins.find(p => p.id === 'pin_drain');
+  const trapPin = pins.find(p => p.id === 'pin_trap');
+  const goldPin = pins.find(p => p.id === 'pin_gold');
+
+  // Animación de deslizamiento de pasadores
+  pins.forEach(p => {
+    if (p.pulled && p.slideProgress < 1) {
+      p.slideProgress = Math.min(1, p.slideProgress + 0.14);
+    }
+  });
+
+  const newBalls = [];
+  let goldInChest = 0;
+  let activeGold = 0;
+  let acidHitGold = false;
+
+  for (let i = 0; i < balls.length; i++) {
+    const b = balls[i];
+    if (!b.active) continue;
+
+    b.vy += 0.22; // gravedad
+    b.x += b.vx;
+    b.y += b.vy;
+    b.vx *= 0.985;
+
+    // Restricciones por tipo de bola y pasadores activos
+    if (b.type === 'acid') {
+      if (!drainPin.pulled && !trapPin.pulled) {
+        // Soportado por el pasador de drenaje en y=210
+        if (b.y + b.r > 206) {
+          b.y = 206 - b.r;
+          b.vy *= -0.3;
+        }
+      } else if (b.drainedSafely) {
+        // Cae directo a la piscina de ácido lateral
+        const targetX = acidPool.x + acidPool.w / 2;
+        b.vx += (targetX - b.x) * 0.015;
+        if (b.y > acidPool.y + 12) {
+          b.y = acidPool.y + 12;
+          b.vy = 0;
+          b.vx *= 0.8;
+        }
+      } else {
+        // El ácido se desvía al canal central porque tiraron primero del pasador trampa
+        b.vx += (200 - b.x) * 0.03;
+      }
+    }
+
+    if (b.type === 'gold' || b.type === 'relic') {
+      activeGold++;
+      // Límites del canal central (x entre 152 y 248)
+      if (b.x - b.r < 150) { b.x = 150 + b.r; b.vx = Math.abs(b.vx) * 0.5; }
+      if (b.x + b.r > 250) { b.x = 250 - b.r; b.vx = -Math.abs(b.vx) * 0.5; }
+
+      // Soportado por el pasador rojo (y=245)
+      if (!trapPin.pulled && b.y + b.r > 241 && b.y < 255) {
+        b.y = 241 - b.r;
+        b.vy *= -0.25;
+      }
+
+      // Cruce por la puerta multiplicadora (y=282..308)
+      if (!b.multiplied && b.y > 285 && b.y < 315) {
+        b.multiplied = true;
+        playTone(680, 0.06, 'sine', 0.06);
+        spawnParticles(b.x, b.y, '#10b981', 5);
+        const clones = Math.min(3, decoyMultiplier - 1);
+        for (let c = 0; c < clones; c++) {
+          newBalls.push({
+            x: b.x + (Math.random() - 0.5) * 14,
+            y: b.y + (Math.random() - 0.5) * 6,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: b.vy,
+            r: 6.5,
+            type: 'gold',
+            multiplied: true,
+            active: true
+          });
+        }
+      }
+
+      // Soportado por el pasador dorado final (y=345)
+      if (!goldPin.pulled && b.y + b.r > 341 && b.y < 358) {
+        b.y = 341 - b.r;
+        b.vy *= -0.25;
+      }
+
+      // Entrada al cofre de extracción (y >= 416)
+      if (b.y + b.r >= chest.y + 8) {
+        b.y = chest.y + 14;
+        b.vy = 0;
+        b.vx *= 0.7;
+        goldInChest++;
+      }
+    }
+
+    // Colisión Ácido vs Oro (Si el ácido invadió el canal central)
+    if (b.type === 'acid' && !b.drainedSafely) {
+      for (let j = 0; j < balls.length; j++) {
+        const other = balls[j];
+        if (!other.active || (other.type !== 'gold' && other.type !== 'relic')) continue;
+        const dx = b.x - other.x;
+        const dy = b.y - other.y;
+        if (dx * dx + dy * dy < 220) {
+          other.active = false;
+          acidHitGold = true;
+          spawnParticles(other.x, other.y, '#ef4444', 12);
+        }
+      }
+    }
+  }
+
+  if (newBalls.length > 0 && balls.length < 70) {
+    balls.push(...newBalls);
+  }
+
+  if (acidHitGold && levelStatus === 'playing') {
+    levelStatus = 'failed';
+    playTone(150, 0.35, 'sawtooth', 0.14);
+    setTimeout(() => {
+      document.getElementById('modal-fail').classList.add('visible');
+    }, 380);
+  } else if (goldPin.pulled && goldInChest >= 8 && levelStatus === 'playing') {
+    levelStatus = 'won';
+    goldCollected += 1200;
+    relicsOwned = Math.min(6, relicsOwned + 1);
+    playTone(523.25, 0.12, 'triangle', 0.12);
+    setTimeout(() => playTone(659.25, 0.18, 'triangle', 0.14), 110);
+    spawnParticles(chest.x + chest.w / 2, chest.y, '#f5b82e', 28);
+    updateHeaderHUD();
+    setTimeout(() => {
+      document.getElementById('modal-win').classList.add('visible');
+    }, 420);
+  }
+}
+
+function drawCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Fondo de cámara acorazada con rejilla táctica
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < canvas.width; x += 25) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += 25) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+
+  // Etiquetas de cámaras superiores
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('CÁMARA CENTRAL DE ORO + RELIQUIA', 200, 46);
+  const acidLabelX = (acidSide === 'left') ? 95 : 305;
+  ctx.fillStyle = '#4ade80';
+  ctx.fillText('TANQUE ÁCIDO', acidLabelX, 76);
+
+  // Dibujar puerta multiplicadora
+  gates.forEach(g => {
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(g.x, g.y, g.w, g.h, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#6ee7b7';
+    ctx.font = '900 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(g.text, g.x + g.w / 2, g.y + 18);
+  });
+
+  // Dibujar muros de la cámara
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  walls.forEach(w => {
+    ctx.beginPath();
+    ctx.moveTo(w.x1, w.y1);
+    ctx.lineTo(w.x2, w.y2);
+    ctx.stroke();
+  });
+
+  // Foso de ácido inferior
+  ctx.fillStyle = 'rgba(34, 197, 94, 0.22)';
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(acidPool.x, acidPool.y, acidPool.w, acidPool.h, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#86efac';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.fillText('DRENAJE ÁCIDO', acidPool.x + acidPool.w / 2, acidPool.y + 23);
+
+  // Cofre del Sindicato
+  ctx.fillStyle = 'rgba(245, 184, 46, 0.2)';
+  ctx.strokeStyle = '#f5b82e';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(chest.x, chest.y, chest.w, chest.h, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#ffe07d';
+  ctx.font = '900 11px sans-serif';
+  ctx.fillText('🧰 COFRE BÓVEDA', chest.x + chest.w / 2, chest.y + 25);
+
+  // Dibujar bolas (Oro, Reliquia y Ácido)
+  balls.forEach(b => {
+    if (!b.active) return;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    if (b.type === 'Acid' || b.type === 'acid') {
+      ctx.fillStyle = '#22c55e';
+      ctx.shadowColor = '#22c55e';
+      ctx.shadowBlur = 6;
+    } else if (b.type === 'relic') {
+      ctx.fillStyle = '#a855f7';
+      ctx.shadowColor = '#a855f7';
+      ctx.shadowBlur = 10;
+    } else {
+      ctx.fillStyle = '#f5b82e';
+      ctx.shadowColor = '#f5b82e';
+      ctx.shadowBlur = 4;
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Dibujar Pasadores Interactivos (Pins)
+  pins.forEach((p, idx) => {
+    if (p.slideProgress >= 1) return;
+    const dx = (p.x2 - p.x1) * p.slideProgress;
+    const x1 = p.x1 + dx;
+    const x2 = p.x2 + dx;
+
+    // Si Rayos X está activo (tras Rebobinar en el Segundo 8), resaltamos qué pasador es seguro y cuál es trampa
+    let strokeCol = p.color;
+    if (xrayActive) {
+      strokeCol = p.isTrapIfFirst && !pins[0].pulled ? '#ef4444' : '#10b981';
+    }
+
+    ctx.strokeStyle = strokeCol;
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x1, p.y1);
+    ctx.lineTo(x2, p.y2);
+    ctx.stroke();
+
+    // Anilla tirador del pasador
+    const handleX = x2 + 10;
+    const handleY = p.y2;
+    ctx.fillStyle = '#0f172a';
+    ctx.strokeStyle = strokeCol;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(handleX, handleY, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(idx + 1, handleX, handleY + 3.5);
+
+    if (xrayActive) {
+      ctx.fillStyle = (p.id === 'pin_drain' && !p.pulled) ? '#6ee7b7' : '#fca5a5';
+      ctx.font = 'bold 10px sans-serif';
+      const hint = (p.id === 'pin_drain') ? '✓ TIRA PRIMERO (RAYOS X)' : (p.id === 'pin_trap' && !pins[0].pulled ? '⚠️ CEBO TRAMPA' : '');
+      if (hint) ctx.fillText(hint, (x1 + x2) / 2, p.y1 - 10);
+    }
+  });
+
+  // Partículas
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.x += pt.vx;
+    pt.y += pt.vy;
+    pt.life -= 0.04;
+    if (pt.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+    ctx.fillStyle = pt.color;
+    ctx.globalAlpha = pt.life;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+  }
+}
+
+function gameLoop() {
+  updatePhysics();
+  drawCanvas();
+  requestAnimationFrame(gameLoop);
+}
+
+// Interacción con clic / toque sobre los pasadores en el Canvas
+canvas.addEventListener('pointerdown', (ev) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (ev.clientX - rect.left) * scaleX;
+  const y = (ev.clientY - rect.top) * scaleY;
+
+  for (const p of pins) {
+    if (p.pulled) continue;
+    const minX = Math.min(p.x1, p.x2) - 20;
+    const maxX = Math.max(p.x1, p.x2) + 28;
+    if (x >= minX && x <= maxX && Math.abs(y - p.y1) <= 22) {
+      pullPin(p);
+      break;
+    }
+  }
+});
+
+// Acciones de los Modos y de las 4 Cirugías del Adversario
+function triggerRewindXRay() {
+  if (!savedSnapshot) {
+    resetLevel();
+    return;
+  }
+  pins = JSON.parse(JSON.stringify(savedSnapshot.pins));
+  balls = JSON.parse(JSON.stringify(savedSnapshot.balls));
+  pinsPulledCount = savedSnapshot.pinsPulledCount;
+  levelStatus = 'playing';
+  xrayActive = true;
+  telemetry.rewindsUsed++;
+  telemetry.arpdauNet = +(telemetry.arpdauNet + 0.004).toFixed(3);
+  hideAllModals();
+  playTone(440, 0.15, 'sine', 0.12);
+  logTelemetry('MONETIZATION_REWIND', 'Jugador usó Rebobinar 3s + Rayos X tras morir en el cebo -> +$0,025 ingresos Rewarded/IAP.');
+  updateTelemetryUI();
+}
+
+function resetLevel() {
+  xrayActive = false;
+  buildLevelGeometry();
+}
+
+function runAISolverDemo() {
+  resetLevel();
+  logTelemetry('AI_SOLVER', 'Ejecutando secuencia óptima verificada por Solver IA: Pasador 1 (Azul) -> Pasador 2 (Rojo) -> Pasador 3 (Dorado).');
+  setTimeout(() => { if (pins[0]) pullPin(pins[0]); }, 350);
+  setTimeout(() => { if (pins[1]) pullPin(pins[1]); }, 1250);
+  setTimeout(() => { if (pins[2]) pullPin(pins[2]); }, 2150);
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + mode).classList.add('active');
+
+  const badge = document.getElementById('stage-badge');
+  const title = document.getElementById('stage-title');
+  const sub = document.getElementById('stage-subtitle');
+
+  if (mode === 'cliffhanger') {
+    badge.className = 'stage-tag cliff';
+    badge.textContent = 'VISTA INVITADO WHATSAPP (4s)';
+    title.textContent = '🔒 Bóveda de César — Reto en Navegador';
+    sub.textContent = 'Tira de los pasadores 1 y 2; al tocar el 3.º salta el Cliffhanger Zeigarnik';
+    logTelemetry('WEB_BRIDGE', 'Abierta vista de Puente Web Instantáneo recibida por WhatsApp (?mode=cliffhanger).');
+  } else if (mode === 'architect') {
+    badge.className = 'stage-tag';
+    badge.textContent = 'MODO ARQUITECTO (3 TOQUES)';
+    title.textContent = `Editando Plano #${selectedBlueprintIdx + 1} en 3 Toques`;
+    sub.textContent = 'Cambia el señuelo o el carril de ácido a la derecha y pruébalo al instante';
+  } else {
+    badge.className = 'stage-tag';
+    badge.textContent = '91% FALLA EN SEG 6';
+    title.textContent = `Bóveda #042 — «El Espejismo ×${decoyMultiplier}»`;
+    sub.textContent = 'Toca los pasadores en el orden correcto para llevar el oro y la reliquia al cofre';
+  }
+  resetLevel();
+}
+
+function selectBlueprint(idx) {
+  selectedBlueprintIdx = idx;
+  document.querySelectorAll('.bp-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === idx);
+  });
+  if (idx === 0) {
+    document.getElementById('cfg-decoy').value = '4';
+    document.getElementById('cfg-lane').value = 'left';
+  } else if (idx === 1) {
+    document.getElementById('cfg-decoy').value = '3';
+    document.getElementById('cfg-lane').value = 'right';
+  } else {
+    document.getElementById('cfg-decoy').value = '5';
+    document.getElementById('cfg-lane').value = 'left';
+  }
+  applyArchitectChanges();
+}
+
+function applyArchitectChanges() {
+  decoyMultiplier = parseInt(document.getElementById('cfg-decoy').value, 10) || 4;
+  acidSide = document.getElementById('cfg-lane').value;
+  stakedRelic = document.getElementById('cfg-relic').value;
+  document.getElementById('stage-title').textContent = `Bóveda #042 — «El Espejismo ×${decoyMultiplier}»`;
+  logTelemetry('ARCHITECT_3TOUCH', `Trampa configurada en 3 toques: Señuelo ×${decoyMultiplier}, Ácido=${acidSide}, Apuesta=${stakedRelic}. Validada por Solver IA.`);
+  resetLevel();
+}
+
+function shareChallengeLink() {
+  telemetry.sharesTriggered++;
+  const refToken = `utm_source=whatsapp_syndicate&utm_medium=cliffhanger_pin3&inviter_id=CESAR_01&bp=${selectedBlueprintIdx}&mult=${decoyMultiplier}&acid=${acidSide}`;
+  telemetry.currentReferrerPayload = refToken;
+  logTelemetry('VIRAL_SHARE (p_share)', `Enlace de reto generado y copiado con token: ?mode=cliffhanger&${refToken}`);
+  updateTelemetryUI();
+  hideAllModals();
+}
+
+function simulatePlayStoreInstallReferrer() {
+  telemetry.installReferrerConversions++;
+  telemetry.viralInstalls += 12;
+  logTelemetry(
+    'PLAY_INSTALL_REFERRER',
+    `Instalación atribuida en Google Play -> Referrer recibido: "${telemetry.currentReferrerPayload}". ¡César y su invitado reciben +250 monedas tras completar el pasador final!`
+  );
+  closeCliffhangerAndFinish();
+  updateTelemetryUI();
+}
+
+function closeCliffhangerAndFinish() {
+  document.getElementById('modal-cliffhanger').classList.remove('visible');
+  levelStatus = 'playing';
+  const goldPin = pins.find(p => p.id === 'pin_gold');
+  if (goldPin && !goldPin.pulled) {
+    goldPin.pulled = true;
+    pinsPulledCount++;
+  }
+}
+
+function exportHeroAdCreative() {
+  logTelemetry(
+    'META_HERO_POST_ID',
+    `Exportado clip de 12s del Plano #${selectedBlueprintIdx + 1} (mortalidad en seg 6: 91%) al conjunto de anuncios Hero Post ID -> Descuento social CPI activo (-20% -> $0,76).`
+  );
+}
+
+function triggerSyndicateRevenge() {
+  const partnerStatus = document.getElementById('partner-status');
+  partnerStatus.textContent = '⚔️ ¡Venganza completada (+2x Botín)!';
+  partnerStatus.style.color = '#6ee7b7';
+  document.getElementById('syndicate-partner').classList.remove('alert');
+  goldCollected += 600;
+  telemetry.lDays = +(telemetry.lDays + 0.08).toFixed(2);
+  updateHeaderHUD();
+  updateTelemetryUI();
+  logTelemetry('SYNDICATE_RETENTION', 'Venganza de Sindicato ejecutada por el grupo de 4 amigos -> Sube retención L_days y protege la bóveda común.');
+}
+
+function nextBlueprintLevel() {
+  selectBlueprint((selectedBlueprintIdx + 1) % 3);
+}
+
+function updateHeaderHUD() {
+  document.getElementById('hud-gold').textContent = `🪙 Botín: ${goldCollected.toLocaleString('es-ES')}`;
+  document.getElementById('hud-relics').textContent = `🏺 Reliquias Sindicato: ${relicsOwned}/6`;
+}
+
+function simulateCohortBatch() {
+  telemetry.paidInstalls += 1000;
+  const pShare = 0.085 + (telemetry.sharesTriggered - 9) * 0.002;
+  const cConv = 0.062 + (telemetry.installReferrerConversions - 3) * 0.003;
+  const k0 = pShare * telemetry.reachPerShare * cConv * telemetry.lDays;
+  const addStore = Math.round(1000 * telemetry.storeUplift);
+  const addViral = Math.round((1000 + addStore) * (k0 / (1 - Math.min(0.85, k0))));
+  telemetry.storeInstalls += addStore;
+  telemetry.viralInstalls += addViral;
+
+  logTelemetry(
+    'SIM_BATCH_1000',
+    `Entran +1.000 pagados ($${(1000 * telemetry.cpiPaid).toFixed(0)}) -> arrastran +${addStore} de tienda y +${addViral} virales (k₀=${k0.toFixed(3)}).`
+  );
+  updateTelemetryUI();
+}
+
+function updateTelemetryUI() {
+  const pShare = Math.min(0.25, 0.085 + (telemetry.sharesTriggered - 9) * 0.0015);
+  const cConv = Math.min(0.18, 0.062 + (telemetry.installReferrerConversions - 3) * 0.0025);
+  const k0 = pShare * telemetry.reachPerShare * cConv * telemetry.lDays;
+  const totalInst = telemetry.paidInstalls + telemetry.storeInstalls + telemetry.viralInstalls;
+  const totalSpend = telemetry.paidInstalls * telemetry.cpiPaid;
+  const ecpi = totalSpend / Math.max(1, totalInst);
+  const ltv = telemetry.lDays * telemetry.arpdauNet;
+  const roasLtv = (ltv / ecpi) * 100;
+  const roasCash90 = roasLtv * 0.832;
+
+  document.getElementById('m-pshare').textContent = `${(pShare * 100).toFixed(2).replace('.', ',')} %`;
+  document.getElementById('m-nreach').textContent = telemetry.reachPerShare.toFixed(2).replace('.', ',');
+  document.getElementById('m-cconv').textContent = `${(cConv * 100).toFixed(2).replace('.', ',')} %`;
+  document.getElementById('m-ldays').textContent = `${telemetry.lDays.toFixed(2).replace('.', ',')} d`;
+  document.getElementById('m-tcycle').textContent = `${telemetry.tCycle.toFixed(2).replace('.', ',')} d`;
+  document.getElementById('m-ecpi').textContent = `$${telemetry.cpiPaid.toFixed(2)} → $${ecpi.toFixed(2)}`;
+  document.getElementById('hud-k0').textContent = `📈 k₀ Medido: ${k0.toFixed(3).replace('.', ',')} · eCPI: $${ecpi.toFixed(2)}`;
+
+  // Detector en vivo de la palanca más débil
+  const arpdauHealth = telemetry.arpdauNet / 0.18;
+  const retHealth = telemetry.lDays / 6.45;
+  const convHealth = cConv / 0.04;
+  const weakestEl = document.getElementById('m-weakest');
+  const weakestSub = document.getElementById('m-weakest-sub');
+
+  if (arpdauHealth <= retHealth && arpdauHealth <= convHealth) {
+    weakestEl.textContent = `ARPDAU ($${telemetry.arpdauNet.toFixed(3)})`;
+  } else if (retHealth <= convHealth) {
+    weakestEl.textContent = `Retención (L=${telemetry.lDays.toFixed(2)}d)`;
+  } else {
+    weakestEl.textContent = `Conversión (${(cConv*100).toFixed(1)}%)`;
+  }
+  weakestSub.textContent = `ROAS Caja 90d: ${roasCash90.toFixed(1)}% · LTV: ${roasLtv.toFixed(1)}%`;
+}
+
+// ============================================================================
+// ONBOARDING FTUE GUIADO (5 PASOS) + MANO DORADA ANIMADA DE "EL VIEJO CERROJO"
+// ============================================================================
+let guidedOnboardingActive = false;
+let currentOnboardingStep = 0;
+
+const FTUE_STEPS = [
+  {
+    badge: 'PASO 1/5 · EL DRENAJE',
+    title: '🗝️ El Viejo Cerrojo: «Vacía primero el tanque de ácido lateral»',
+    desc: 'En 0,5s ves el peligro: desliza el Pasador #1 (Azul) para evacuar el ácido verde hacia el foso inferior sin tocar el oro.',
+    actionLabel: '⚡ Deslizar Pasador #1 (Drenaje)',
+    bubbleHtml: '¡Desliza <strong>1.º el Pasador Azul (#1)</strong> para drenar el ácido sin caer en el cebo!',
+    swipeLabel: 'DESLIZA #1 ➔'
+  },
+  {
+    badge: 'PASO 2/5 · EL MULTIPLICADOR',
+    title: '🗝️ El Viejo Cerrojo: «Multiplica el botín en la compuerta ×4»',
+    desc: 'Con el ácido neutralizado, tira del Pasador #2 (Rojo) y del #3 (Dorado) para clonar tus monedas y la Reliquia rumbo al cofre.',
+    actionLabel: '⚡ Multiplicar y Vaciar Bóveda',
+    bubbleHtml: '¡Ácido drenado! Ahora desliza <strong>#2 Rojo y #3 Dorado</strong> para multiplicar ×4 el botín.',
+    swipeLabel: 'DESLIZA #2 Y #3 ➔'
+  },
+  {
+    badge: 'PASO 3/5 · RESCATE RAYOS X',
+    title: '🗝️ El Viejo Cerrojo: «Monetización del Segundo 6 (Rebobinar + Rayos X)»',
+    desc: 'El 91 % tira antes del señuelo rojo y muere en el segundo 6. Con Rebobinar 3s + Rayos X ($0,025 ARPDAU) revelas qué pasador es seguro.',
+    actionLabel: '⚡ Activar Rayos X en Vivo',
+    bubbleHtml: '<strong>Rayos X Activo:</strong> Verde = Pasador Seguro (#1) · Rojo = Cebo Mortal (#2).',
+    swipeLabel: 'RAYOS X ACTIVO'
+  },
+  {
+    badge: 'PASO 4/5 · SINDICATO DE 4',
+    title: '🗝️ El Viejo Cerrojo: «Sindicato de 4 Amigos y Venganza Cooperativa»',
+    desc: 'Tu escuadrón comparte el Álbum de 6 Reliquias. Si asaltan a tu socio Marcos, ejecuta la Venganza de Sindicato (+2x botín y sube L_days).',
+    actionLabel: '⚡ Ejecutar Venganza Sindicato',
+    bubbleHtml: 'Mira a la derecha: <strong>Sindicato de 4 Amigos</strong>. ¡Venga a Marcos para blindar la bóveda!',
+    swipeLabel: 'SINDICATO 4/4'
+  },
+  {
+    badge: 'PASO 5/5 · ARQUITECTO EN 3 TOQUES',
+    title: '🗝️ El Viejo Cerrojo: «Diseña tu Trampa en 3 Toques (15s) y Reta por WhatsApp»',
+    desc: 'Sin editores vacíos: elige 1 Plano Maestro, cambia Señuelo / Carril / Reliquia en 3 toques (validado por Solver IA) y dispara el enlace viral.',
+    actionLabel: '⚡ Configurar Cebo y Retar',
+    bubbleHtml: '¡Tu bóveda está lista en <strong>3 Toques</strong>! Compártela en WhatsApp con Cliffhanger Zeigarnik.',
+    swipeLabel: 'RETAR WHATSAPP'
+  }
+];
+
+function clearFtueSectionHighlights() {
+  ['architect-blueprints-box', 'architect-touch-box', 'syndicate-strip-box'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('ftue-highlight-pulse');
+  });
+}
+
+function updateFtueHandOverlay() {
+  const overlay = document.getElementById('ftue-hand-overlay');
+  const bubbleText = document.getElementById('ftue-cerrojo-text');
+  const swipePill = document.getElementById('ftue-swipe-pill');
+  if (!overlay || !bubbleText || !swipePill) return;
+
+  const drainPin = pins.find(p => p.id === 'pin_drain');
+  const trapPin = pins.find(p => p.id === 'pin_trap');
+  const goldPin = pins.find(p => p.id === 'pin_gold');
+  const isLeftAcid = (acidSide === 'left');
+
+  if (levelStatus !== 'playing') {
+    overlay.classList.add('hidden');
+    return;
+  }
+
+  // Si aún no se ha tirado del Pasador #1 (Drenaje Azul), posicionar la Mano Dorada sobre el Pasador #1
+  if (drainPin && !drainPin.pulled) {
+    overlay.classList.remove('hidden');
+    overlay.style.top = '136px';
+    overlay.style.left = isLeftAcid ? '18px' : '168px';
+    if (!guidedOnboardingActive || currentOnboardingStep === 0) {
+      bubbleText.innerHTML = FTUE_STEPS[0].bubbleHtml;
+      swipePill.textContent = FTUE_STEPS[0].swipeLabel;
+    }
+  } else if (trapPin && !trapPin.pulled) {
+    // Pasador #1 ya retirado -> guiar hacia el Pasador #2 (Multiplicador)
+    overlay.classList.remove('hidden');
+    overlay.style.top = '172px';
+    overlay.style.left = '92px';
+    bubbleText.innerHTML = FTUE_STEPS[1].bubbleHtml;
+    swipePill.textContent = 'DESLIZA #2 ➔';
+    if (guidedOnboardingActive && currentOnboardingStep === 0) {
+      setGuidedOnboardingStep(1, false);
+    }
+  } else if (goldPin && !goldPin.pulled) {
+    // Pasador #2 retirado -> guiar hacia el Pasador #3 (Dorado Final)
+    overlay.classList.remove('hidden');
+    overlay.style.top = '272px';
+    overlay.style.left = '92px';
+    bubbleText.innerHTML = '¡Oro multiplicándose! Desliza el <strong>Pasador #3 Dorado</strong> para abrir el cofre.';
+    swipePill.textContent = 'DESLIZA #3 ➔';
+  } else {
+    overlay.classList.add('hidden');
+  }
+}
+
+function startGuidedOnboarding(stepIdx = 0) {
+  guidedOnboardingActive = true;
+  document.getElementById('ftue-stepper-bar').classList.add('active');
+  setGuidedOnboardingStep(stepIdx, true);
+  logTelemetry('FTUE_ONBOARDING', 'Iniciado Onboarding Guiado de 5 Pasos con «El Viejo Cerrojo» (Mano Dorada Animada activa).');
+}
+
+function setGuidedOnboardingStep(stepIdx, shouldReset = false) {
+  currentOnboardingStep = Math.max(0, Math.min(FTUE_STEPS.length - 1, stepIdx));
+  const step = FTUE_STEPS[currentOnboardingStep];
+
+  document.getElementById('ftue-step-badge').textContent = step.badge;
+  document.getElementById('ftue-step-title').textContent = step.title;
+  document.getElementById('ftue-step-desc').textContent = step.desc;
+  document.getElementById('btn-ftue-action').textContent = step.actionLabel;
+
+  const dots = document.querySelectorAll('#ftue-step-dots .ftue-step-dot');
+  dots.forEach((d, idx) => {
+    d.classList.toggle('current', idx === currentOnboardingStep);
+    d.classList.toggle('done', idx < currentOnboardingStep);
+  });
+
+  clearFtueSectionHighlights();
+
+  if (currentOnboardingStep === 0 && shouldReset) {
+    resetLevel();
+  } else if (currentOnboardingStep === 2) {
+    xrayActive = true;
+  } else if (currentOnboardingStep === 3) {
+    const synd = document.getElementById('syndicate-strip-box');
+    if (synd) synd.classList.add('ftue-highlight-pulse');
+  } else if (currentOnboardingStep === 4) {
+    const bpBox = document.getElementById('architect-blueprints-box');
+    const tcBox = document.getElementById('architect-touch-box');
+    if (bpBox) bpBox.classList.add('ftue-highlight-pulse');
+    if (tcBox) tcBox.classList.add('ftue-highlight-pulse');
+  }
+
+  updateFtueHandOverlay();
+  const bubbleText = document.getElementById('ftue-cerrojo-text');
+  const swipePill = document.getElementById('ftue-swipe-pill');
+  if (bubbleText && swipePill) {
+    bubbleText.innerHTML = step.bubbleHtml;
+    swipePill.textContent = step.swipeLabel;
+  }
+}
+
+function executeCurrentOnboardingStepAction() {
+  if (currentOnboardingStep === 0) {
+    resetLevel();
+    const drainPin = pins.find(p => p.id === 'pin_drain');
+    if (drainPin && !drainPin.pulled) pullPin(drainPin);
+    logTelemetry('FTUE_STEP_1', 'Paso 1 (Drenaje) completado: Pasador #1 Azul deslizado.');
+  } else if (currentOnboardingStep === 1) {
+    const drainPin = pins.find(p => p.id === 'pin_drain');
+    const trapPin = pins.find(p => p.id === 'pin_trap');
+    const goldPin = pins.find(p => p.id === 'pin_gold');
+    if (drainPin && !drainPin.pulled) pullPin(drainPin);
+    setTimeout(() => { if (trapPin && !trapPin.pulled) pullPin(trapPin); }, 350);
+    setTimeout(() => { if (goldPin && !goldPin.pulled) pullPin(goldPin); }, 950);
+    logTelemetry('FTUE_STEP_2', 'Paso 2 (Multiplicador) completado: Oro clonado en compuerta ×' + decoyMultiplier + '.');
+  } else if (currentOnboardingStep === 2) {
+    resetLevel();
+    saveStateSnapshot();
+    triggerRewindXRay();
+    logTelemetry('FTUE_STEP_3', 'Paso 3 (Rescate Rayos X) demostrado: pasadores etiquetados en vivo.');
+  } else if (currentOnboardingStep === 3) {
+    triggerSyndicateRevenge();
+    logTelemetry('FTUE_STEP_4', 'Paso 4 (Sindicato de 4) demostrado: Venganza cooperativa activada.');
+  } else if (currentOnboardingStep === 4) {
+    switchMode('architect');
+    selectBlueprint((selectedBlueprintIdx + 1) % 3);
+    shareChallengeLink();
+    logTelemetry('FTUE_STEP_5', 'Paso 5 (Arquitecto en 3 Toques) completado: Plano validado y enlace viral generado.');
+  }
+}
+
+function nextGuidedOnboardingStep() {
+  if (currentOnboardingStep < FTUE_STEPS.length - 1) {
+    setGuidedOnboardingStep(currentOnboardingStep + 1, false);
+  } else {
+    closeGuidedOnboarding();
+  }
+}
+
+function closeGuidedOnboarding() {
+  guidedOnboardingActive = false;
+  clearFtueSectionHighlights();
+  document.getElementById('ftue-stepper-bar').classList.remove('active');
+  updateFtueHandOverlay();
+}
+
+// Comprobar si se abrió con ?mode=cliffhanger en la URL
+window.addEventListener('DOMContentLoaded', () => {
+  buildLevelGeometry();
+  updateTelemetryUI();
+  updateFtueHandOverlay();
+  logTelemetry('INIT_SDK', 'Play Install Referrer API Bridge + Onboarding FTUE («El Viejo Cerrojo») inicializados.');
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'cliffhanger') {
+    switchMode('cliffhanger');
+  }
+  requestAnimationFrame(gameLoop);
+});
+</script>
+</body>
+</html>
